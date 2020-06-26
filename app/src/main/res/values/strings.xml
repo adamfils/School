@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">School</string>
+    <string name="failed_to_get_data">Failed To Get Data</string>
+    <string name="search_school">Search School...</string>
+    <string name="no_results">No Results</string>
+    <string name="no_data_found">NO DATA FOUND!!! 😥</string>
+    <string name="writing_average_score">Writing Average Score:</string>
+    <string name="math_average_score">Math Average Score:</string>
+    <string name="reading_average_score">Reading Average Score:</string>
+    <string name="sat_total_test_takers">SAT Total Test Takers:</string>
+</resources>
