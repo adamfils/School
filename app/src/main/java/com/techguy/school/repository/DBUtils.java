@@ -1,9 +1,9 @@
-package com.techguy.school.utils;
+package com.techguy.school.repository;
 
 import android.util.Log;
 
 import com.techguy.school.contracts.SchoolListener;
-import com.techguy.school.model.SchoolInfoModel;
+import com.techguy.school.model.InfoModel;
 import com.techguy.school.model.SchoolModel;
 
 import java.util.ArrayList;
@@ -17,9 +17,9 @@ public class DBUtils {
         return SchoolModel.listAll(SchoolModel.class);
     }
 
-    public static List<SchoolInfoModel> getInfoDatabase() {
+    public static List<InfoModel> getInfoDatabase() {
         //Returns School Info Database List
-        return SchoolInfoModel.listAll(SchoolInfoModel.class);
+        return InfoModel.listAll(InfoModel.class);
     }
 
     public static Long getIdForInfo(String dbn) {
@@ -28,7 +28,7 @@ public class DBUtils {
         Log.e("TOM", "DBN: "+dbn);
         //Check If Database Contains Values
         if (getInfoDatabase().size() > 0) {
-            for (SchoolInfoModel info : getInfoDatabase()) {
+            for (InfoModel info : getInfoDatabase()) {
                 //Check Each Database Object for Same DBN Value
                 if (info.getDbn().equals(dbn)) {
                     id = info.getId();

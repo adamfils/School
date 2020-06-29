@@ -16,7 +16,6 @@ import com.techguy.school.model.SchoolModel;
 import com.techguy.school.view.SchoolInfoActivity;
 import com.techguy.school.viewholder.SchoolVH;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SchoolAdapter extends RecyclerView.Adapter<SchoolVH> {
@@ -41,7 +40,7 @@ public class SchoolAdapter extends RecyclerView.Adapter<SchoolVH> {
         //Handles IndexOutOfBounds Errors
         if (position < model.size()) {
             holder.setSchoolName(model.get(position).getSchool_name());
-            holder.setSchoolLocation(model.get(position).getSchool_location());
+            holder.setSchoolLocation(model.get(position).getLocation());
             //When One Recyclerview Item Is Clicked
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override

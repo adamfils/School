@@ -7,7 +7,7 @@ import com.orm.dsl.Table;
 public class SchoolModel extends SugarRecord {
     private String dbn;
     private String school_name;
-    private String school_location;
+    private String location;
 
     public SchoolModel() {
     }
@@ -15,7 +15,7 @@ public class SchoolModel extends SugarRecord {
     public SchoolModel(String dbn, String school_name, String school_location) {
         this.dbn = dbn;
         this.school_name = school_name;
-        this.school_location = school_location;
+        this.location = school_location;
     }
 
     public String getDbn() {
@@ -34,11 +34,11 @@ public class SchoolModel extends SugarRecord {
         this.school_name = school_name;
     }
 
-    public String getSchool_location() {
-        return school_location;
+    public String getLocation() {
+        return location;
     }
 
-    public void setSchool_location(String school_location) {
-        this.school_location = school_location;
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

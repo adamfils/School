@@ -1,6 +1,8 @@
 package com.techguy.school.view;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 
 import android.os.Bundle;
 import android.view.View;
@@ -8,18 +10,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.techguy.school.R;
-import com.techguy.school.contracts.InfoListener;
-import com.techguy.school.model.SchoolInfoModel;
-import com.techguy.school.model.SchoolModel;
-import com.techguy.school.utils.DBUtils;
-import com.techguy.school.utils.NetworkUtils;
+import com.techguy.school.model.InfoModel;
+import com.techguy.school.viewmodel.SchoolVM;
 
 import java.util.List;
 
-public class SchoolInfoActivity extends AppCompatActivity implements InfoListener {
+public class SchoolInfoActivity extends AppCompatActivity {
 
     TextView schoolName, satTotal, mathTotal, readingTotal, writingTotal, noData;
-    String dbn="";
+    String dbn = "";
+    SchoolVM schoolViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +29,35 @@ public class SchoolInfoActivity extends AppCompatActivity implements InfoListene
         //Get Value From Intent
         dbn = getIntent().getStringExtra("dbn");
 
+        schoolViewModel = ViewModelProviders.of(this).get(SchoolVM.class);
+        //Listen for Database Values
+        schoolViewModel.getSchoolInfo().observe(this, new Observer<List<InfoModel>>() {
+            @Override
+            public void onChanged(List<InfoModel> model) {
+                Long id = schoolViewModel.getDBId(dbn).getValue();
+                //Checking is DBN Value is Not Empty and Not -1
+
+                if (model.size() > 0 && !dbn.isEmpty() && id != null && id != -1L) {
+                    InfoModel info = InfoModel.findById(InfoModel.class, id);
+                    schoolName.setText(info.getSchool_name());
+                    satTotal.setText(info.getNum_of_sat_test_takers());
+                    readingTotal.setText(info.getSat_critical_reading_avg_score());
+                    mathTotal.setText(info.getSat_math_avg_score());
+                    writingTotal.setText(info.getSat_writing_avg_score());
+                    noData.setVisibility(View.GONE);
+                } else {
+                    noData.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        //Listen for Database Errors
+        schoolViewModel.getError().observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                Toast.makeText(SchoolInfoActivity.this, s, Toast.LENGTH_SHORT).show();
+            }
+        });
+
 
         schoolName = findViewById(R.id.school_name);
         satTotal = findViewById(R.id.sat_total);
@@ -37,29 +66,15 @@ public class SchoolInfoActivity extends AppCompatActivity implements InfoListene
         writingTotal = findViewById(R.id.writing_total);
         noData = findViewById(R.id.noData);
 
-        //Listen for Database Values
-        NetworkUtils.getInfo(this);
     }
 
+
     @Override
-    public void onInfoSuccess(List<SchoolModel> model) {
-        Long id = DBUtils.getIdForInfo(dbn);
-        //Checking is DBN Value is Not Empty and Not -1
-        if (model.size() > 0 && !dbn.isEmpty() && id != -1L) {
-            SchoolInfoModel info = SchoolInfoModel.findById(SchoolInfoModel.class,id);
-            schoolName.setText(info.getSchool_name());
-            satTotal.setText(info.getSat_takers());
-            readingTotal.setText(info.getReading_score());
-            mathTotal.setText(info.getMath_score());
-            writingTotal.setText(info.getWriting_score());
-            noData.setVisibility(View.GONE);
-        }else{
-            noData.setVisibility(View.VISIBLE);
+    protected void onDestroy() {
+        if (schoolViewModel != null) {
+            schoolViewModel.getSchoolInfo().removeObservers(this);
+            schoolViewModel.getError().removeObservers(this);
         }
-    }
-
-    @Override
-    public void onFailure() {
-        Toast.makeText(this, R.string.failed_to_get_data, Toast.LENGTH_SHORT).show();
+        super.onDestroy();
     }
 }

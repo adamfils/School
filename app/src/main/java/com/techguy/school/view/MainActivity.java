@@ -1,110 +1,109 @@
 package com.techguy.school.view;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.baoyz.widget.PullRefreshLayout;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.techguy.school.R;
 import com.techguy.school.adapter.SchoolAdapter;
-import com.techguy.school.contracts.SchoolListener;
-import com.techguy.school.model.SchoolModel;
-import com.techguy.school.utils.DBUtils;
-import com.techguy.school.utils.NetworkUtils;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.techguy.school.viewmodel.SchoolVM;
 
 public class MainActivity extends AppCompatActivity {
 
     RecyclerView schoolList;
     EditText searchBar;
     PullRefreshLayout refreshLayout;
-    SchoolListener schoolListener;
+    SchoolVM schoolVM;
+    SchoolAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        schoolVM = ViewModelProviders.of(this).get(SchoolVM.class);
+        //Fetch School Info From VM
+        schoolVM.getSchool().observe(this, model -> {
+            adapter = new SchoolAdapter(MainActivity.this, model);
+            //Handle Received DB Results
+            if (model.size() > 0) {
+                schoolList.setAdapter(adapter);
+            } else {
+                Toast.makeText(MainActivity.this, R.string.no_results, Toast.LENGTH_SHORT).show();
+            }
+            refreshLayout.setRefreshing(false);
+        });
+        //Listen for Errors
+        schoolVM.getError().observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                Toast.makeText(MainActivity.this, s, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
         schoolList = findViewById(R.id.school_list);
         //Set Layout Manager And Orientation
         schoolList.setLayoutManager(new LinearLayoutManager(this));
 
-        schoolListener = new SchoolListener() {
-            @Override
-            public void onSchoolSuccess(List<SchoolModel> model) {
-                //Handle Received DB Results
-                if (model.size() > 0) {
-                    schoolList.setAdapter(new SchoolAdapter(MainActivity.this, model));
-                }else{
-                    Toast.makeText(MainActivity.this, R.string.no_results, Toast.LENGTH_SHORT).show();
-                }
-                refreshLayout.setRefreshing(false);
-            }
-
-            @Override
-            public void onFailure() {
-                Toast.makeText(MainActivity.this, R.string.failed_to_get_data, Toast.LENGTH_SHORT).show();
-                refreshLayout.setRefreshing(false);
-            }
-        };
-
         searchBar = findViewById(R.id.search_bar);
-        searchBar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent keyEvent) {
-                //On Search Icon On Keyboard Pressed
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    String query = searchBar.getText().toString();
+        //Listen for When Search Icon is Tapped on Keyboard
+        searchBar.setOnEditorActionListener((v, actionId, keyEvent) -> {
+            //On Search Icon On Keyboard Pressed
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                String query = searchBar.getText().toString().trim();
 
-                    if (query != null && !query.isEmpty()) {
-                        DBUtils.queryDB(query, schoolListener);
-                    }else{
-                        //If No Query Shake Bar
-                        YoYo.with(Techniques.Shake).duration(500).playOn(searchBar);
-                    }
-                    InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    assert imm != null;
-                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                if (!query.isEmpty()) {
+                    schoolVM.querySchool(query);
+                } else {
+                    //If No Query Shake Bar
+                    YoYo.with(Techniques.Shake).duration(500).playOn(searchBar);
                 }
-                return true;
+                InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                assert imm != null;
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
             }
+            return true;
         });
 
         refreshLayout = findViewById(R.id.refresh);
-        refreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                //Fetching Data
-                NetworkUtils.getSchools(schoolListener);
-                //Clear Search Bar and Clear Focus If Needed
-                searchBar.setText("");
-                try {
-                    if (searchBar.hasFocus())
-                        searchBar.clearFocus();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        //Listen to Refresh Events
+        refreshLayout.setOnRefreshListener(() -> {
+            //Fetching Data
+            schoolVM.getSchool();
+            //Clear Search Bar and Clear Focus If Needed
+            searchBar.setText("");
+            try {
+                if (searchBar.hasFocus())
+                    searchBar.clearFocus();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 
-        //Fetching Data
-        NetworkUtils.getSchools(schoolListener);
 
     }
 
+    @Override
+    protected void onDestroy() {
+        if (schoolVM != null) {
+            schoolVM.getSchool().removeObservers(this);
+            schoolVM.getError().removeObservers(this);
+        }
+        super.onDestroy();
 
+
+    }
 }

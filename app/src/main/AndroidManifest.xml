@@ -13,15 +13,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
         tools:replace="android:icon">
-        <activity android:name=".view.SchoolInfoActivity"></activity>
+        <activity android:name=".view.SchoolInfoActivity"/>
 
         <meta-data
             android:name="DATABASE"
             android:value="school.db" />
         <meta-data
             android:name="VERSION"
-            android:value="1" />
+            android:value="2" />
         <meta-data
             android:name="QUERY_LOG"
             android:value="true" />
